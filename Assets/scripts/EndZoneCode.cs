@@ -15,7 +15,7 @@ public class EndZoneCode : MonoBehaviour {
 	
 	void OnTriggerEnter(Collider col) {
 		//Debug.Log("EndZoneCode: collider name " + col.gameObject.name);
-		if (col.gameObject.name=="Puck") MainGameCode.EndZoneResetPuck();
+		if (col.gameObject.name=="Puck(Clone)") col.gameObject.GetComponent<PuckCode>().CastleReset();
 		
 	}	
 }

@@ -3,14 +3,7 @@ using System.Collections;
 
 public class AimCameraCode : MonoBehaviour {
 
-	public GameObject puck;
-
 	float aimCameraRotationSpeed = 30;
-	
-	float aimCameraFollowDistance= 30;
-	float aimCameraHeightOffset=20;
-	
-	bool puckMoving=false;
 	
 	// Use this for initialization
 	void Start () {

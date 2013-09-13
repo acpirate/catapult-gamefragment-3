@@ -11,6 +11,8 @@ public class GUICode : MonoBehaviour {
 	public GUIStyle powerMeterInteriorStyle;
 	public GUIStyle timerStyle;
 	public GUIStyle angleLableStyle;
+	public GUIStyle puckSelectionButtonStyle;
+	
 	
 	//buttons
 	int buttonSize=60;
@@ -55,6 +57,9 @@ public class GUICode : MonoBehaviour {
 			break;
 			case GAMESTATE.PLAY:
 				if (Input.GetKey(KeyCode.Return)) {
+					if (MainGameCode.selectedPuck!=null && 
+						MainGameCode.selectedPuck.rigidbody.velocity.magnitude<1 && 
+						!MainGameCode.selectedPuck.GetComponent<PuckCode>().cameraResetFlag)
 					MainGameCode.AimMode(); 
 				}
 			break;
@@ -84,6 +89,8 @@ public class GUICode : MonoBehaviour {
 				DrawBestTime();
 			break;
 			case GAMESTATE.PLAY:
+				DrawPuckSelectionButtons();
+				DrawPuckCooldown();
 				PlayUIButtons();
 				PlayInstructions();
 				DrawTime();
@@ -96,6 +103,7 @@ public class GUICode : MonoBehaviour {
 				DrawGameOver();
 			break;
 			case GAMESTATE.AIM:
+				DrawPuckSelectionButtons();
 				DrawTime();
 				AimInstructions();
 				DisplayTargetIndicator();
@@ -104,6 +112,25 @@ public class GUICode : MonoBehaviour {
 				DrawAngleSelect();
 			break;			
 		}	
+	}	
+	
+	void DrawPuckSelectionButtons() {
+		
+		foreach (GameObject partyMember in MainGameCode.party) {
+			Rect selectionButtonPosition=new Rect(Screen.width-buttonSize-buttonOffset,
+												  50+(buttonSize+buttonOffset)*MainGameCode.party.IndexOf(partyMember),
+												  buttonSize,buttonSize);
+			if (GUI.Button(selectionButtonPosition,
+					   partyMember.GetComponent<MeshRenderer>().material.GetTexture("_MainTex"))) {
+				MainGameCode.setSelectedPuck(partyMember);
+			}	
+			
+		}	
+		
+	}	
+	
+	void DrawPuckCooldown() {
+		
 	}	
 	
 	void DrawBestTime() {
@@ -208,7 +235,7 @@ public class GUICode : MonoBehaviour {
 	void DisplayTargetIndicator() {
 		GUIStyle tempStyle=new GUIStyle();
 		Vector3 kingPosition=MainGameCode.king.transform.position;
-		Vector3 kingScreenPosition = MainGameCode.aimCamera.GetComponentInChildren<Camera>().WorldToViewportPoint(kingPosition);
+		Vector3 kingScreenPosition = MainGameCode.selectedPuck.GetComponent<PuckCode>().aimCamera.GetComponentInChildren<Camera>().WorldToViewportPoint(kingPosition);
 		
 		float kingScreenPositionHorizontal=kingScreenPosition.x;
 		if (kingScreenPositionHorizontal>1) kingScreenPositionHorizontal=1;
@@ -266,9 +293,12 @@ public class GUICode : MonoBehaviour {
 	}	
 	
 	void DrawResetPuckButton() {	
+		if (MainGameCode.selectedPuck!=null) {
+		
 		if (GUI.Button(new Rect(Screen.width-buttonSize-buttonOffset,Screen.height-buttonOffset-buttonSize,buttonSize,buttonSize),
 			resetTexture)) 
-			MainGameCode.ResetPuck();
+			MainGameCode.selectedPuck.GetComponent<PuckCode>().ResetPuck();
+		}	
 		
 	}	
 	
