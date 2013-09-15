@@ -60,18 +60,19 @@ public class MainGameCode : MonoBehaviour {
 		
 		BuildWall();
 		InitializeParty();
+		setSelectedPuck(party[0]);
 		
 	}	
 	
 	void Start () {
-		mainCamera.transform.LookAt(party[0].transform.position);
+		//mainCamera.transform.LookAt(party[0].transform.position);
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		//turn off main camera if the puck is moving
-		if (selectedPuck!=null && selectedPuck.GetComponent<PuckCode>().puckMoving) {mainCamera.enabled=false; } 
-		if (selectedPuck!=null && !selectedPuck.GetComponent<PuckCode>().puckMoving && gamestate!=GAMESTATE.AIM) { 
+		if (selectedPuck!=null && selectedPuck.GetComponent<PuckCode>().getPuckMoving()) {mainCamera.enabled=false; } 
+		if (selectedPuck!=null && !selectedPuck.GetComponent<PuckCode>().getPuckMoving() && gamestate!=GAMESTATE.AIM) { 
 			mainCamera.enabled=true;
 			//mainCamera.transform.position=puck.GetComponent<PuckCode>().moveCamera.transform.position;
 			//mainCamera.transform.position=new Vector3(mainCamera.transform.position.x, Mathf.Abs(mainCamera.transform.position.y),mainCamera.transform.position.z);
@@ -83,7 +84,9 @@ public class MainGameCode : MonoBehaviour {
 	}
 	
 	public static void setSelectedPuck(GameObject inSelectedPuck) {
+		if (gamestate==GAMESTATE.AIM) selectedPuck.GetComponentInChildren<LineRenderer>().enabled=false;
 		selectedPuck=inSelectedPuck;
+		if (gamestate==GAMESTATE.AIM) selectedPuck.GetComponentInChildren<LineRenderer>().enabled=true;
 		selectedPuck.GetComponent<PuckCode>().MainCameraSetBehindPuck();
 	}	
 	
@@ -159,46 +162,51 @@ public class MainGameCode : MonoBehaviour {
 	
 	
 	public static void ShootPuck() {
-		Engine tempEngine=engines[selectedEngine];
-		
-		int tempMaxPower=tempEngine.getMaxPower();
-		
-		EndAim();
-		selectedPuck.transform.position+=new Vector3(0,tempEngine.getElevation(),0);
-		
-		int tempAngle=engines[selectedEngine].getAngles()[angleSelectNumber];
-		//puck normalized forward is the starting point
-		Vector3 shootVector=selectedPuck.transform.forward;
-		//rotated vector to shooting angle
-		
-		
-		
-		GameObject tempRotatingObject=new GameObject("tempGameObject");
-		
-		tempRotatingObject.transform.rotation=selectedPuck.transform.rotation;
-		
-		//Debug.Log("maingamecode: shootvector " + tempRotatingObject.transform.forward);
-		
-		tempRotatingObject.transform.eulerAngles+=new Vector3(-1*tempAngle,0,0);
-		
-		shootVector=tempRotatingObject.transform.forward;
-		
-		Destroy(tempRotatingObject);
-		
-		//Debug.Log("maingamecode: tempAngle " + tempAngle);
-		
-		//shootVector=Quaternion.AngleAxis(-1*tempAngle,puck.transform.right)*shootVector;
-		
-		//Debug.Log("maingamecode: rotated shootvector " + shootVector);
-				
-		//add power multipliers
-		shootVector*=currentPower/100*tempMaxPower*powerMultiplier;
-		//puck.transform.eulerAngles+=new Vector3(0,tempAngle*-1,0);
-		
-		selectedPuck.rigidbody.AddForce(shootVector);
-		if (tempEngine.getType()!=ENGINE.BALLISTA)
-			selectedPuck.rigidbody.AddRelativeTorque(new Vector3(currentPower/100*maxPower*powerMultiplier*10,0,0));
-		
+		//Debug.Log("maingamecode: shoot code selectedpuck cooldown" + selectedPuck.GetComponent<PuckCode>().currentCooldown);
+		if (selectedPuck.GetComponent<PuckCode>().currentCooldown<=0) {
+			Engine tempEngine=engines[selectedEngine];
+			
+			int tempMaxPower=tempEngine.getMaxPower();
+			
+			EndAim();
+			selectedPuck.transform.position+=new Vector3(0,tempEngine.getElevation(),0);
+			
+			int tempAngle=engines[selectedEngine].getAngles()[angleSelectNumber];
+			//puck normalized forward is the starting point
+			Vector3 shootVector=selectedPuck.transform.forward;
+			//rotated vector to shooting angle
+			
+			
+			
+			GameObject tempRotatingObject=new GameObject("tempGameObject");
+			
+			tempRotatingObject.transform.rotation=selectedPuck.transform.rotation;
+			
+			//Debug.Log("maingamecode: shootvector " + tempRotatingObject.transform.forward);
+			
+			tempRotatingObject.transform.eulerAngles+=new Vector3(-1*tempAngle,0,0);
+			
+			shootVector=tempRotatingObject.transform.forward;
+			
+			Destroy(tempRotatingObject);
+			
+			//Debug.Log("maingamecode: tempAngle " + tempAngle);
+			
+			//shootVector=Quaternion.AngleAxis(-1*tempAngle,puck.transform.right)*shootVector;
+			
+			//Debug.Log("maingamecode: rotated shootvector " + shootVector);
+					
+			//add power multipliers
+			shootVector*=currentPower/100*tempMaxPower*powerMultiplier;
+			//puck.transform.eulerAngles+=new Vector3(0,tempAngle*-1,0);
+			
+			selectedPuck.rigidbody.AddForce(shootVector);
+			if (tempEngine.getType()!=ENGINE.BALLISTA)
+				selectedPuck.rigidbody.AddRelativeTorque(new Vector3(currentPower/100*maxPower*powerMultiplier*10,0,0));
+			
+			
+			selectedPuck.GetComponent<PuckCode>().DoCooldown();
+		} else selectedPuck.GetComponent<PuckCode>().currentCooldownWarningTime=selectedPuck.GetComponent<PuckCode>().maxCooldownWarningTime;	
 		currentPower=0;
 	}	
 		
@@ -208,6 +216,7 @@ public class MainGameCode : MonoBehaviour {
 		ResetKingPedestal();
 		ResetKing();
 		InitializeParty();
+		setSelectedPuck(party[0]);
 		BuildWall();
 		gamestate=GAMESTATE.GAMEOVER;
 	}

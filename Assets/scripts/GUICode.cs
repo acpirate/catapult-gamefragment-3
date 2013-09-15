@@ -12,6 +12,9 @@ public class GUICode : MonoBehaviour {
 	public GUIStyle timerStyle;
 	public GUIStyle angleLableStyle;
 	public GUIStyle puckSelectionButtonStyle;
+	public GUIStyle cooldownMeterStyle;
+	public GUIStyle cooldownMeterBorderStyle;
+	public GUIStyle cooldownMeterWarningStyle;
 	
 	
 	//buttons
@@ -28,6 +31,8 @@ public class GUICode : MonoBehaviour {
 	int powerMeterWidth=20;
 	//engine selection
 	int engineSelectNumber=0;
+	//puck cooldown meter
+	int cooldownWidth=10;
 			
 	public Texture2D settingsTexture;
 	public Texture2D resetTexture;
@@ -59,7 +64,7 @@ public class GUICode : MonoBehaviour {
 				if (Input.GetKey(KeyCode.Return)) {
 					if (MainGameCode.selectedPuck!=null && 
 						MainGameCode.selectedPuck.rigidbody.velocity.magnitude<1 && 
-						!MainGameCode.selectedPuck.GetComponent<PuckCode>().cameraResetFlag)
+						!MainGameCode.selectedPuck.GetComponent<PuckCode>().castleResetFlag)
 					MainGameCode.AimMode(); 
 				}
 			break;
@@ -90,7 +95,6 @@ public class GUICode : MonoBehaviour {
 			break;
 			case GAMESTATE.PLAY:
 				DrawPuckSelectionButtons();
-				DrawPuckCooldown();
 				PlayUIButtons();
 				PlayInstructions();
 				DrawTime();
@@ -120,16 +124,52 @@ public class GUICode : MonoBehaviour {
 			Rect selectionButtonPosition=new Rect(Screen.width-buttonSize-buttonOffset,
 												  50+(buttonSize+buttonOffset)*MainGameCode.party.IndexOf(partyMember),
 												  buttonSize,buttonSize);
+			
+			if (MainGameCode.selectedPuck==partyMember) {
+				Rect selectionBoxIndicatorPosition=new Rect(selectionButtonPosition.center.x-buttonOffset/2-buttonSize/2,
+														    selectionButtonPosition.center.y-buttonOffset/2-buttonSize/2,
+															selectionButtonPosition.width+buttonOffset,
+															selectionButtonPosition.height+buttonOffset);
+				GUI.Box(selectionBoxIndicatorPosition,"");
+			}	
+			
 			if (GUI.Button(selectionButtonPosition,
 					   partyMember.GetComponent<MeshRenderer>().material.GetTexture("_MainTex"))) {
 				MainGameCode.setSelectedPuck(partyMember);
 			}	
 			
+			DrawPuckCooldown(selectionButtonPosition,partyMember);
+			
 		}	
 		
 	}	
 	
-	void DrawPuckCooldown() {
+	void DrawPuckCooldown(Rect puckButtonPosition, GameObject inPuck) {
+		PuckCode tempPuckCode=inPuck.GetComponent<PuckCode>();
+		
+		//Debug.Log("guicode: temppuckcooldown "+tempPuckCode.currentCooldown);
+		
+		if (tempPuckCode.currentCooldown>0) {
+			float cooldownRatio=tempPuckCode.currentCooldown/tempPuckCode.maxCooldown;
+			
+			Rect coolDownMeterSizeAndPosition=new Rect(puckButtonPosition.center.x-buttonSize/2-buttonOffset-cooldownWidth,
+													   puckButtonPosition.y+puckButtonPosition.height-puckButtonPosition.height*cooldownRatio,
+													   cooldownWidth, puckButtonPosition.height*cooldownRatio);
+			Rect coolDownMeterBorderSizeAndPosition=new Rect(puckButtonPosition.center.x-buttonSize/2-buttonOffset-cooldownWidth-2,
+													   puckButtonPosition.y+puckButtonPosition.height-puckButtonPosition.height*cooldownRatio-2,
+													   cooldownWidth+4, puckButtonPosition.height*cooldownRatio+4);			
+			
+			//Rect coolDownMeterSizeAndPosition=new Rect(100,100,100,100);
+			GUIStyle tempCooldownMeterStyle=cooldownMeterStyle;
+			if (Mathf.FloorToInt(tempPuckCode.currentCooldownWarningTime/.5f)%2==1) tempCooldownMeterStyle=cooldownMeterWarningStyle;
+			
+			
+			GUI.Box(coolDownMeterBorderSizeAndPosition,"",cooldownMeterBorderStyle);
+			GUI.Box(coolDownMeterSizeAndPosition,"",tempCooldownMeterStyle);
+			
+			
+		}	
+		
 		
 	}	
 	

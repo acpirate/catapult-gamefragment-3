@@ -13,6 +13,9 @@ public class PrefabManager : MonoBehaviour {
 	public Texture priestTextureLoader;
 	public Texture wizardTextureLoader;
 	public Texture rogueTextureLoader;
+	public GameObject splashPrefabLoader;
+	public GameObject shockFlashPrefabLoader;
+	
 	
 	public static GameObject puckDustPrefab=null;
 	public static Texture brickCracked=null;
@@ -24,7 +27,8 @@ public class PrefabManager : MonoBehaviour {
 	public static Texture priestTexture;
 	public static Texture wizardTexture;
 	public static Texture rogueTexture;
-
+	public static GameObject splashPrefab=null;
+	public static GameObject shockFlashPrefab=null;
 	
 	
 	
@@ -40,7 +44,8 @@ public class PrefabManager : MonoBehaviour {
 		priestTexture=priestTextureLoader;
 		wizardTexture=wizardTextureLoader;
 		rogueTexture=rogueTextureLoader;
-		
+		splashPrefab=splashPrefabLoader;
+		shockFlashPrefab=shockFlashPrefabLoader;
 	}		
 	
 	void Start () {

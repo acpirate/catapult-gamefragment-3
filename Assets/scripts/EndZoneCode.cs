@@ -17,5 +17,7 @@ public class EndZoneCode : MonoBehaviour {
 		//Debug.Log("EndZoneCode: collider name " + col.gameObject.name);
 		if (col.gameObject.name=="Puck(Clone)") col.gameObject.GetComponent<PuckCode>().CastleReset();
 		
+		GameObject tempSplash=(GameObject) Instantiate(PrefabManager.splashPrefab, col.gameObject.transform.position,Quaternion.identity);
+		tempSplash.transform.eulerAngles=new Vector3(-90,0,0);
 	}	
 }

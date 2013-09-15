@@ -7,24 +7,43 @@ public class PuckCode : MonoBehaviour {
 	
 	float RotationSpeed = 100;
 	
-	public bool puckMoving=false;
+	bool puckMoving=false;
 	
-	public bool cameraResetFlag=false;
+	bool cameraResetFlag=false;
 	
-	bool castleResetFlag=false;
+	[HideInInspector]
+	public bool castleResetFlag=false;
+	
 	float castleResetTime=3f;
 	float castleResetCountdown=0;
 	
+	[HideInInspector]
 	public GameObject moveCamera;
 	
 	PUCKCLASS puckClass;
 	
+	[HideInInspector]
 	public GameObject aimCamera;
 	
-	float maxCooldown=120;
-	float currentCooldown=0;
+	[HideInInspector]
+	public float maxCooldown=30;
+	
+	[HideInInspector]
+	public float currentCooldown=0;
+	
 	int strength=0;
 	
+	[HideInInspector]
+	public float maxCooldownWarningTime=3;
+	
+	[HideInInspector]
+	public float currentCooldownWarningTime=0;
+
+	[HideInInspector]
+	public bool effectFired=false;
+	
+	[HideInInspector]
+	public float wizardExplosionRadius=30;
 	
 	// Use this for initialization
 	
@@ -37,6 +56,7 @@ public class PuckCode : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+		
 		//turn on and off aim cameras
 		aimCamera.GetComponent<Camera>().enabled=false;
 		if (MainGameCode.selectedPuck==gameObject) {
@@ -48,7 +68,7 @@ public class PuckCode : MonoBehaviour {
 		//Debug.Log(rigidbody.velocity.magnitude);
 		
 		
-		if (rigidbody.velocity.magnitude>1) puckMoving=true;
+		if (rigidbody.velocity.magnitude>3) puckMoving=true;
 		if (puckMoving) {
 			cameraResetFlag=true;
 			moveCamera.GetComponent<Camera>().enabled=true;
@@ -58,8 +78,9 @@ public class PuckCode : MonoBehaviour {
 		}	
 		
 		if (cameraResetFlag && !puckMoving) {
+			//Debug.Log("puckcode: in camera reset flag");
 			cameraResetFlag=false;
-			MainCameraSetBehindPuck();
+			if (MainGameCode.selectedPuck==gameObject) MainCameraSetBehindPuck();
 		}	
 		
 		if (puckMoving && rigidbody.velocity.magnitude<1) {
@@ -71,7 +92,7 @@ public class PuckCode : MonoBehaviour {
 		if (Input.GetKey(KeyCode.LeftArrow)) direction=DIRECTION.LEFT;
 		if (Input.GetKey(KeyCode.RightArrow)) direction=DIRECTION.RIGHT;
 		
-		if (MainGameCode.gamestate==GAMESTATE.AIM && direction!=DIRECTION.NONE) {
+		if (MainGameCode.gamestate==GAMESTATE.AIM && direction!=DIRECTION.NONE && MainGameCode.selectedPuck==gameObject) {
 			int rotationSwitch=1;
 			if (direction==DIRECTION.LEFT) rotationSwitch=-1;
 			
@@ -81,6 +102,8 @@ public class PuckCode : MonoBehaviour {
 		if (transform.position.y<-100) ResetPuck();
 		//run the cooldown timer
 		if (currentCooldown>0 && MainGameCode.gamestate!=GAMESTATE.SETTINGS) currentCooldown-=Time.deltaTime;
+		//run cooldown warning timer
+		if (currentCooldownWarningTime>0 && MainGameCode.gamestate!=GAMESTATE.SETTINGS) currentCooldownWarningTime-=Time.deltaTime;
 		
 		if (castleResetFlag) {
 			castleResetCountdown-=Time.deltaTime;
@@ -89,8 +112,21 @@ public class PuckCode : MonoBehaviour {
 				ResetPuckMid();
 			}	
 		}
+		if (MainGameCode.selectedPuck!=gameObject) moveCamera.GetComponent<Camera>().enabled=false;
+		
+		if (currentCooldown<=0 && rigidbody.velocity.magnitude<3) effectFired=false;
+		
 	}
-			
+	
+	public void DoCooldown() {
+		currentCooldown=maxCooldown;	
+	}	
+	
+	
+	public bool getPuckMoving() {
+		return puckMoving;
+	}		
+	
 	public void CastleReset() {
 			castleResetFlag=true;
 			castleResetCountdown=castleResetTime;
@@ -117,6 +153,10 @@ public class PuckCode : MonoBehaviour {
 		break;
 		}	
 		
+	}	
+	
+	public PUCKCLASS getClass() {
+		return puckClass;	
 	}	
 	
 	public int getStrength() {

@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class DustCode : MonoBehaviour {
+public class ParticleEffectSelfDestructCode : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
@@ -11,6 +11,5 @@ public class DustCode : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 		if (!GetComponent<ParticleSystem>().isPlaying) Destroy(gameObject);
-	
 	}
 }

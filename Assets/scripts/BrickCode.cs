@@ -31,24 +31,30 @@ public class BrickCode : MonoBehaviour {
 	}
 	
 	void OnCollisionEnter(Collision col) {
+		string hitName=col.gameObject.name;
+		PuckCode tempPuckCode=null;
+		if (hitName=="Puck(Clone)") tempPuckCode=col.gameObject.GetComponent<PuckCode>();
+		
 		//Debug.Log("brickcode: collision velocity" + col.relativeVelocity.magnitude);
 		if (invulnerabilityCounter==0) {
 			if (Mathf.Abs((int) col.relativeVelocity.magnitude)>20) { 
-				MakeDust(col);
+				
 				int tempDamage=1;
 				//pucks damage bricks based on their strength
-				if (col.gameObject.name=="Puck(Clone)") 
+				if (hitName=="Puck(Clone)") 
 				tempDamage=col.gameObject.GetComponent<PuckCode>().getStrength();
 				//bricks dont damage each other unless they hit really hard
-				if (col.gameObject.name=="Brick(Clone)" && col.relativeVelocity.magnitude<40)
+				if (hitName=="Brick(Clone)" && col.relativeVelocity.magnitude<40)
 				tempDamage=0;	
 					
 				
-				damage+=tempDamage;
-				if (damage>2) ShowDamage();
-				
-				if (damage<5) GetComponent<MeshRenderer>().material.SetColor("_Color",damageColors[damage]);
-				invulnerabilityCounter=invulnerabilityTime;
+				BrickDamage(tempDamage);
+	
+			}	
+		}
+		if (hitName=="Puck(Clone)") {
+			if (tempPuckCode.getClass()==PUCKCLASS.WIZARD && !tempPuckCode.effectFired) {
+				WizardExplosion(tempPuckCode);
 			}	
 		}	
 	}	
@@ -62,4 +68,27 @@ public class BrickCode : MonoBehaviour {
 		GetComponent<MeshRenderer>().material.SetTexture("_BumpMap",PrefabManager.brickCrackedNormal);
 	}	
 	
+	void WizardExplosion(PuckCode inPuckCode) {
+		Instantiate(PrefabManager.shockFlashPrefab,inPuckCode.gameObject.transform.position,Quaternion.Euler(new Vector3(-90,0,0)));
+		Collider[] hitColliders = Physics.OverlapSphere(inPuckCode.gameObject.transform.position, inPuckCode.wizardExplosionRadius);
+		foreach (Collider col in hitColliders) {
+			if (col.gameObject.name=="Brick(Clone)" || col.gameObject.name=="Brick") {
+				col.gameObject.GetComponent<BrickCode>().BrickDamage(2);	
+			}	
+		}	
+		
+		
+		inPuckCode.effectFired=true;		
+	}	
+	
+	public void BrickDamage(int damageAmount) {
+		damage+=damageAmount;
+		if (damage>2) ShowDamage();
+		
+		if (damage<5) GetComponent<MeshRenderer>().material.SetColor("_Color",damageColors[damage]);
+		if (damageAmount>0) { 
+			invulnerabilityCounter=invulnerabilityTime;
+			//MakeDust(col);
+		}		
+	}	
 }

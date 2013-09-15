@@ -14,7 +14,7 @@ public class PlayCameraCode : MonoBehaviour {
 	
 	// Use this for initialization
 	void Start () {
-		transform.LookAt(MainGameCode.party[0].transform.position);
+		//transform.LookAt(MainGameCode.party[0].transform.position);
 		yPlane=transform.position.y;
 	}
 	
