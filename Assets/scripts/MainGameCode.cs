@@ -14,16 +14,22 @@ public class MainGameCode : MonoBehaviour {
 	public static GameObject king=null;
 	//public static GameObject puck=null;
 	public static Camera mainCamera=null;
-	
-	public GameObject brickPrefab;
-	static GameObject staticBrickPrefab;
-	static int wallWidth=12;
+
+	static int wallWidth=11;
 	static int wallHeight=10;
 	static float brickWidth=20f;
 	static float brickHeight=10f;
-	static float brickHeightOffset=5.47986f;
+	static float brickHeightOffset=3.8f;
 	static float wallXStart=-300;
 	static float wallZStart=950;
+	static float towerHeight=11;
+	static float leftTowerXStart=-340;
+	static float leftTowerZStart=940;
+	static float rightTowerXStart=-80;
+	static float rightTowerZStart=940;	
+	
+	static float throneXStart=-215;
+	static float throneZStart=1020;
 	
 	public static ENGINE selectedEngine = ENGINE.BALLISTA;
 	public static int angleSelectNumber=0;
@@ -46,7 +52,11 @@ public class MainGameCode : MonoBehaviour {
 	public static float finalTime=0;
 	public static float bestTime=0;
 	
+	public static float brickTransparencyRadius=30;
+	
 	public static GAMESTATE gamestate=GAMESTATE.TITLE;
+	
+	public static List<GameObject> bricksInTheWay=new List<GameObject>();
 
 	// Use this for initialization
 	void Awake() {
@@ -54,22 +64,26 @@ public class MainGameCode : MonoBehaviour {
 		if (engines.Count==0) InitializeEngines();
 		if (king==null) king=GameObject.Find("King");
 		//if (puck==null) puck=GameObject.Find("Puck");
-		if (mainCamera==null) mainCamera=GameObject.Find("Main Camera").GetComponent<Camera>();
-		
-		staticBrickPrefab=brickPrefab;
-		
-		BuildWall();
-		InitializeParty();
-		setSelectedPuck(party[0]);
-		
+		if (mainCamera==null) mainCamera=GameObject.Find("Main Camera").GetComponent<Camera>();	
 	}	
 	
 	void Start () {
+		BuildTower();
+		BuildWall();
+		BuildThrone();
+		ResetKing();
+		
+		
+		InitializeParty();
+		setSelectedPuck(party[0]);	
+		Debug.Break();
 		//mainCamera.transform.LookAt(party[0].transform.position);
 	}
 	
 	// Update is called once per frame
 	void Update () {
+
+		
 		//turn off main camera if the puck is moving
 		if (selectedPuck!=null && selectedPuck.GetComponent<PuckCode>().getPuckMoving()) {mainCamera.enabled=false; } 
 		if (selectedPuck!=null && !selectedPuck.GetComponent<PuckCode>().getPuckMoving() && gamestate!=GAMESTATE.AIM) { 
@@ -81,7 +95,55 @@ public class MainGameCode : MonoBehaviour {
 		if (gamestate!=GAMESTATE.GAMEOVER && gamestate!=GAMESTATE.SETTINGS && gamestate!=GAMESTATE.TITLE) gameTime+=Time.deltaTime;
 		if (gamestate==GAMESTATE.TITLE) { ResetTimers(); }
 		
+
+	
+		BrickTransparency();
+		TurnPhysicsOffAimingPuck();
+		
+		
 	}
+	
+	public static void TurnPhysicsOffAimingPuck() {
+		foreach (GameObject puck in party) {
+			puck.rigidbody.isKinematic=false;
+		}	
+		if (gamestate==GAMESTATE.AIM) selectedPuck.rigidbody.isKinematic=true;
+	}	
+	
+	public static void BrickTransparency() {
+		//make previously transparent bricks opaque
+		foreach (GameObject brick in bricksInTheWay) {
+			if (brick!=null)
+			brick.GetComponent<BrickCode>().SetTranparent(false);	
+		}		
+		bricksInTheWay.Clear();		
+		Vector3 transparentStart=mainCamera.transform.position;
+		if (gamestate==GAMESTATE.AIM) transparentStart=selectedPuck.GetComponent<PuckCode>().aimCamera.transform.position;
+		if (selectedPuck.GetComponent<PuckCode>().getPuckMoving()) transparentStart=selectedPuck.GetComponent<PuckCode>().moveCamera.transform.position;
+		
+
+		RaycastHit[] hits;
+		Vector3 heading=selectedPuck.transform.position - transparentStart;
+		float distance=heading.magnitude;
+        hits = Physics.RaycastAll(transparentStart, heading, distance);
+		
+		foreach(RaycastHit hit in hits) {
+			if (hit.collider.gameObject.name=="Brick(Clone)" || hit.collider.gameObject.name=="Brick") {
+				bricksInTheWay.Add(hit.collider.gameObject);
+				Collider[] hitColliders = Physics.OverlapSphere(hit.collider.gameObject.transform.position, brickTransparencyRadius);
+				foreach(Collider col in hitColliders) {
+					if (col.gameObject.name=="Brick(Clone)" || col.gameObject.name=="Brick") {
+						if (!bricksInTheWay.Contains(col.gameObject)) bricksInTheWay.Add(col.gameObject);
+					}	
+				}
+			}	
+		}	
+	
+		//set bricks to transparent
+		foreach (GameObject brick in bricksInTheWay) {
+			brick.GetComponent<BrickCode>().SetTranparent(true);	
+		}		
+	}	
 	
 	public static void setSelectedPuck(GameObject inSelectedPuck) {
 		if (gamestate==GAMESTATE.AIM) selectedPuck.GetComponentInChildren<LineRenderer>().enabled=false;
@@ -147,23 +209,119 @@ public class MainGameCode : MonoBehaviour {
 		engines[ENGINE.CATAPULT]=new Engine(ENGINE.CATAPULT,75,new List<int>() {45,60,75});
 	}	
 	
+	static void BuildThrone() {
+		float halfBrickWidth=brickWidth/2;
+		//level 1
+		Vector3 level1LeftBrickPosition=new Vector3(throneXStart,brickHeightOffset,throneZStart);
+		Vector3 level1MiddleLeftBrickPosition=level1LeftBrickPosition+new Vector3(0+halfBrickWidth,0,0);
+		Vector3 level1MiddleRightBrickPosition=level1LeftBrickPosition+new Vector3(0+brickWidth,0,0);
+		Vector3 level1RightBrickPosition=level1LeftBrickPosition+new Vector3(0+brickWidth*1.5f,0,0);
+	
+		Instantiate(PrefabManager.brickPrefab,level1LeftBrickPosition,Quaternion.Euler(0,90,0));
+		Instantiate(PrefabManager.brickPrefab,level1MiddleLeftBrickPosition,Quaternion.Euler(0,90,0));					
+		Instantiate(PrefabManager.brickPrefab,level1MiddleRightBrickPosition,Quaternion.Euler(0,90,0));
+		Instantiate(PrefabManager.brickPrefab,level1RightBrickPosition,Quaternion.Euler(0,90,0));		
+		
+		//level 2
+		Vector3 level2LeftBrickPosition=level1LeftBrickPosition+new Vector3(0,halfBrickWidth,0);
+		Vector3 level2UpperMiddleBrickPosition=level2LeftBrickPosition+new Vector3(brickWidth*.75f,0,halfBrickWidth*.5f);
+		Vector3 level2RightBrickPosition=level2LeftBrickPosition+new Vector3(halfBrickWidth*3,0,0);
+		
+		Instantiate(PrefabManager.brickPrefab,level2LeftBrickPosition,Quaternion.Euler(0,90,0));
+		Instantiate(PrefabManager.brickPrefab,level2UpperMiddleBrickPosition,Quaternion.Euler(0,0,0));
+		Instantiate(PrefabManager.brickPrefab,level2RightBrickPosition,Quaternion.Euler(0,90,0));
+				
+	}	
+	
 	static void BuildWall() {
+		float brickHalfWidth=brickWidth/2;
 		for (int yCounter=0;yCounter<wallHeight;yCounter++) {
 			for (int xCounter=0;xCounter<wallWidth;xCounter++) {
 				float brickOffset=0;
-				if (yCounter%2==1) brickOffset=brickWidth/2;
+				if (yCounter%2==1) brickOffset=brickHalfWidth;
 				Vector3 brickLocation=new Vector3(wallXStart+xCounter*brickWidth+brickOffset,brickHeight*yCounter+brickHeightOffset,wallZStart);
-				Instantiate(staticBrickPrefab,brickLocation,Quaternion.identity);
+				bool destroyWallBrick=true;
+				if (xCounter!=wallWidth-1) destroyWallBrick=false;
+				if (yCounter%2!=1) destroyWallBrick=false;
+				if (!destroyWallBrick) Instantiate(PrefabManager.brickPrefab,brickLocation,Quaternion.identity);
 			}	
 		}	
 	}	
 	
+	static void BuildTower() {
+		float brickHalfWidth=brickWidth/2;
+		
+		for (int levelCounter=0;levelCounter<towerHeight;levelCounter++) {
+		//int levelCounter=0;	
+			//left tower
+			float brickOffset=0;
+			if (levelCounter%2==1) brickOffset=brickHalfWidth;
+			//front bricks
+			Vector3 frontBrick1Location=new Vector3(leftTowerXStart+brickOffset,brickHeight*levelCounter+brickHeightOffset,leftTowerZStart);
+			Vector3 frontBrick2Location=frontBrick1Location+new Vector3(brickWidth,0,0);
+			Instantiate(PrefabManager.brickPrefab,frontBrick1Location,Quaternion.identity);
+			Instantiate(PrefabManager.brickPrefab,frontBrick2Location,Quaternion.identity);
+			//rear bricks
+			Vector3 rearBrick1Location=new Vector3(leftTowerXStart-brickOffset+brickHalfWidth,brickHeight*levelCounter+brickHeightOffset,leftTowerZStart+4*brickHalfWidth);
+			Vector3 rearBrick2Location=rearBrick1Location+new Vector3(brickWidth,0,0);
+			Instantiate(PrefabManager.brickPrefab,rearBrick1Location,Quaternion.identity);
+			Instantiate(PrefabManager.brickPrefab,rearBrick2Location,Quaternion.identity);
+			//left bricks
+			Vector3 leftBrick1Location=new Vector3(leftTowerXStart-brickHalfWidth/2,brickHeight*levelCounter+brickHeightOffset,leftTowerZStart+brickWidth*.75f-brickOffset);
+			Vector3 leftBrick2Location=leftBrick1Location+new Vector3(0,0,brickWidth);
+			Instantiate(PrefabManager.brickPrefab,leftBrick1Location,Quaternion.Euler(new Vector3(0,90,0)));
+			Instantiate(PrefabManager.brickPrefab,leftBrick2Location,Quaternion.Euler(new Vector3(0,90,0)));
+			//right bricks
+			Vector3 rightBrick1Location=new Vector3(leftTowerXStart-brickHalfWidth/2+4*brickHalfWidth,brickHeight*levelCounter+brickHeightOffset,leftTowerZStart+brickWidth*.75f+brickOffset-brickHalfWidth);
+			Vector3 rightBrick2Location=rightBrick1Location+new Vector3(0,0,brickWidth);
+			
+			if (levelCounter%2==1 || levelCounter==towerHeight-1) {
+				Instantiate(PrefabManager.brickPrefab,rightBrick1Location,Quaternion.Euler(new Vector3(0,90,0)));
+			}
+			else {
+				if (levelCounter<towerHeight-1)
+				Instantiate(PrefabManager.halfBrickPrefab,rightBrick1Location+new Vector3(0,0,brickHalfWidth/2-brickHalfWidth),Quaternion.identity);				 
+			}	
+			Instantiate(PrefabManager.brickPrefab,rightBrick2Location,Quaternion.Euler(new Vector3(0,90,0))); 
+			
+			//right tower
+			//right front bricks
+			Vector3 rightFrontBrick1Location=new Vector3(rightTowerXStart-brickOffset,brickHeight*levelCounter+brickHeightOffset,rightTowerZStart);
+			Vector3 rightFrontBrick2Location=rightFrontBrick1Location+new Vector3(brickWidth,0,0);
+			Instantiate(PrefabManager.brickPrefab,rightFrontBrick1Location,Quaternion.identity);
+			Instantiate(PrefabManager.brickPrefab,rightFrontBrick2Location,Quaternion.identity);
+			//right rear bricks
+			Vector3 rightRearBrick1Location=new Vector3(rightTowerXStart+brickOffset-brickHalfWidth,brickHeight*levelCounter+brickHeightOffset,rightTowerZStart+4*brickHalfWidth);
+			Vector3 rightRearBrick2Location=rightRearBrick1Location+new Vector3(brickWidth,0,0);
+			Instantiate(PrefabManager.brickPrefab,rightRearBrick1Location,Quaternion.identity);
+			Instantiate(PrefabManager.brickPrefab,rightRearBrick2Location,Quaternion.identity);			
+			//right leftside bricks
+			Vector3 rightTowerLeftBrick1Location=new Vector3(rightTowerXStart-brickHalfWidth*1.5f,brickHeight*levelCounter+brickHeightOffset,rightTowerZStart+brickWidth*.25f+brickOffset);
+			Vector3 rightTowerLeftBrick2Location=rightTowerLeftBrick1Location+new Vector3(0,0,brickWidth);
+			if (levelCounter%2==1 || levelCounter==towerHeight-1) {
+				Instantiate(PrefabManager.brickPrefab,rightTowerLeftBrick1Location,Quaternion.Euler(new Vector3(0,90,0))); }
+			else  {
+				if (levelCounter<towerHeight-1)
+				Instantiate(PrefabManager.halfBrickPrefab,rightTowerLeftBrick1Location+new Vector3(0,0,brickHalfWidth/2-brickHalfWidth),Quaternion.Euler(new Vector3(0,90,0)));					
+			}	
+			Instantiate(PrefabManager.brickPrefab,rightTowerLeftBrick2Location,Quaternion.Euler(new Vector3(0,90,0)));			
+			//right rightside bricks
+			Vector3 rightTowerRightBrick1Location=new Vector3(rightTowerXStart-brickHalfWidth*1.5f+4*brickHalfWidth,brickHeight*levelCounter+brickHeightOffset,rightTowerZStart+brickWidth*.25f-brickOffset+brickHalfWidth);
+			Vector3 rightTowerRightBrick2Location=rightTowerRightBrick1Location+new Vector3(0,0,brickWidth);
+			Instantiate(PrefabManager.brickPrefab,rightTowerRightBrick1Location,Quaternion.Euler(new Vector3(0,90,0)));
+			Instantiate(PrefabManager.brickPrefab,rightTowerRightBrick2Location,Quaternion.Euler(new Vector3(0,90,0)));	
+		
+		
+		}
+	}	
 	
 	
 	
 	public static void ShootPuck() {
 		//Debug.Log("maingamecode: shoot code selectedpuck cooldown" + selectedPuck.GetComponent<PuckCode>().currentCooldown);
 		if (selectedPuck.GetComponent<PuckCode>().currentCooldown<=0) {
+			//turn on puck physics after aiming
+			selectedPuck.rigidbody.isKinematic=false;
 			Engine tempEngine=engines[selectedEngine];
 			
 			int tempMaxPower=tempEngine.getMaxPower();
@@ -213,11 +371,13 @@ public class MainGameCode : MonoBehaviour {
 	
 	public static void QuitGame() {
 		ClearBricks();
-		ResetKingPedestal();
-		ResetKing();
+		
 		InitializeParty();
 		setSelectedPuck(party[0]);
 		BuildWall();
+		BuildTower();
+		ResetKing();		
+		BuildThrone();
 		gamestate=GAMESTATE.GAMEOVER;
 	}
 	
@@ -229,7 +389,7 @@ public class MainGameCode : MonoBehaviour {
 	public static void ClearBricks() {
 		foreach(GameObject brick in GameObject.FindGameObjectsWithTag("Brick")) {
 			Destroy(brick);	
-		}	
+		}		
 	}	
 	
 	
@@ -254,20 +414,11 @@ public class MainGameCode : MonoBehaviour {
 		mainCamera.enabled=true;
 		foreach (GameObject puck in party) puck.GetComponent<LineRenderer>().enabled=false;
 		gamestate=GAMESTATE.PLAY;
-	}	
-	
-	public static void ResetKingPedestal() {
-		
-		GameObject tempObject=null;
-		tempObject=(GameObject) Instantiate(staticBrickPrefab,new Vector3(-150,6f,1000),Quaternion.identity);	
-		tempObject.rigidbody.velocity=new Vector3(0,0,0);
-		tempObject=(GameObject) Instantiate(staticBrickPrefab,new Vector3(-150,17f,1000),Quaternion.identity);
-		tempObject.rigidbody.velocity=new Vector3(0,0,0);
-	}	
+	}		
 	
 	public static void ResetKing() {
 		king.rigidbody.velocity=new Vector3(0,0,0);
-		king.transform.position=new Vector3(-150,24.6f,1000);
+		king.transform.position=new Vector3(-200,11.2f,1015);
 		king.transform.eulerAngles=new Vector3(0,0,0);
 		king.rigidbody.velocity=new Vector3(0,0,0);
 		king.GetComponent<KingCode>().Stabilize();

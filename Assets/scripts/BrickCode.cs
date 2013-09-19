@@ -44,7 +44,7 @@ public class BrickCode : MonoBehaviour {
 				if (hitName=="Puck(Clone)") 
 				tempDamage=col.gameObject.GetComponent<PuckCode>().getStrength();
 				//bricks dont damage each other unless they hit really hard
-				if (hitName=="Brick(Clone)" && col.relativeVelocity.magnitude<40)
+				if ((col.gameObject.name=="Brick(Clone)" || col.gameObject.name=="Brick" || col.gameObject.name=="HalfBrick(Clone)") && col.relativeVelocity.magnitude<40)
 				tempDamage=0;	
 					
 				
@@ -72,7 +72,7 @@ public class BrickCode : MonoBehaviour {
 		Instantiate(PrefabManager.shockFlashPrefab,inPuckCode.gameObject.transform.position,Quaternion.Euler(new Vector3(-90,0,0)));
 		Collider[] hitColliders = Physics.OverlapSphere(inPuckCode.gameObject.transform.position, inPuckCode.wizardExplosionRadius);
 		foreach (Collider col in hitColliders) {
-			if (col.gameObject.name=="Brick(Clone)" || col.gameObject.name=="Brick") {
+			if (col.gameObject.name=="Brick(Clone)" || col.gameObject.name=="Brick" || col.gameObject.name=="HalfBrick(Clone)") {
 				col.gameObject.GetComponent<BrickCode>().BrickDamage(2);	
 			}	
 		}	
@@ -85,10 +85,38 @@ public class BrickCode : MonoBehaviour {
 		damage+=damageAmount;
 		if (damage>2) ShowDamage();
 		
-		if (damage<5) GetComponent<MeshRenderer>().material.SetColor("_Color",damageColors[damage]);
+		if (damage<5) {
+			Color tempColor=damageColors[damage];
+			GetComponent<MeshRenderer>().material.SetColor("_Color",tempColor);
+			GetComponent<MeshRenderer>().material.SetColor("_GridColor",getTransparentDamageColor());
+		}	
 		if (damageAmount>0) { 
 			invulnerabilityCounter=invulnerabilityTime;
 			//MakeDust(col);
 		}		
+	}
+	
+	public void SetTranparent(bool isTransparent) {
+		if (isTransparent) {
+			GetComponent<MeshRenderer>().material.shader=PrefabManager.transparentVectorShader;
+			GetComponent<MeshRenderer>().material.SetColor("_GridColor",getTransparentDamageColor()); 
+			GetComponent<MeshRenderer>().material.SetFloat("_LineWidth",.0f);
+		}
+		else {
+			GetComponent<MeshRenderer>().material=PrefabManager.brickMaterial;
+			if (damage>2) ShowDamage();
+			if (damage<5)
+			GetComponent<MeshRenderer>().material.SetColor("_Color",damageColors[damage]);					
+		}	
 	}	
+	
+	public Color getTransparentDamageColor() {
+		Color tempColor=Color.white;
+		if (damage<=5) tempColor=damageColors[damage];
+		tempColor=new Color(tempColor.r, tempColor.g, tempColor.b, .20f);
+		
+		return tempColor;
+	}	
+	
+	
 }

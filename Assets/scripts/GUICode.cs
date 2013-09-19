@@ -67,6 +67,7 @@ public class GUICode : MonoBehaviour {
 						!MainGameCode.selectedPuck.GetComponent<PuckCode>().castleResetFlag)
 					MainGameCode.AimMode(); 
 				}
+				TabSelectsPuck();
 			break;
 			case GAMESTATE.AIM:
 				if (Input.GetKey(KeyCode.Escape)) {
@@ -78,6 +79,7 @@ public class GUICode : MonoBehaviour {
 				if (Input.GetKeyUp(KeyCode.Space) && MainGameCode.currentPower>0) {
 					MainGameCode.ShootPuck();
 				}
+				TabSelectsPuck();
 			break;
 			
 		}	
@@ -115,6 +117,15 @@ public class GUICode : MonoBehaviour {
 				DrawEngineSelect();
 				DrawAngleSelect();
 			break;			
+		}	
+	}	
+	
+	void TabSelectsPuck() {
+		if (Input.GetKeyDown(KeyCode.Tab)) {
+			int currentIndex=MainGameCode.party.IndexOf(MainGameCode.selectedPuck);
+			int newSelectedPuckIndex=currentIndex+1;
+			if (newSelectedPuckIndex==MainGameCode.party.Count) newSelectedPuckIndex=0;
+			MainGameCode.setSelectedPuck(MainGameCode.party[newSelectedPuckIndex]);
 		}	
 	}	
 	
@@ -294,7 +305,9 @@ public class GUICode : MonoBehaviour {
 	}	
 	
 	void DrawGameOver() {
-		ShadowAndOutline.DrawOutline(new Rect(0,Screen.height*.25f,Screen.width,Screen.height*.5f),"Game Over",titleStyle,Color.black,Color.white,2f);
+		string endString="You Quit :(";
+		if (MainGameCode.king.transform.position.y<20) endString="You Win!";
+		ShadowAndOutline.DrawOutline(new Rect(0,Screen.height*.25f,Screen.width,Screen.height*.5f),endString,titleStyle,Color.black,Color.white,2f);
 		if ((float.Parse(Time.time.ToString("0.0"))) % 3<2.5f)
 		ShadowAndOutline.DrawOutline(new Rect(0,Screen.height*.75f,Screen.width,Screen.height*.25f),"Click anywhere to go back to title",instructionStyle,Color.black,Color.white,2f);	
 	}	
@@ -320,7 +333,7 @@ public class GUICode : MonoBehaviour {
 		aimInstructionString+="ballista fires flat shots at low angles, ";
 		aimInstructionString+="catapult fires spinning shots at high angles,\n";
 		aimInstructionString+="trebuchet first high power spinning shots at a fixed angle\n and starts in an elevated position\n";
-		aimInstructionString+="arrow keys to turn puck and tilt view, esc to cancel\nhold space to power up, release to fire";
+		aimInstructionString+="q & e turn puck, w & s tilt view, esc to cancel\nhold space to power up, release to fire";
 		Rect instructionPosition=new Rect(0,Screen.height*.75f,Screen.width,Screen.height*.10f);
 		ShadowAndOutline.DrawOutline(instructionPosition,aimInstructionString,instructionStyle,Color.black,Color.white,2f);
 	}	

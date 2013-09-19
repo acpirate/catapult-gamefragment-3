@@ -15,7 +15,11 @@ public class PrefabManager : MonoBehaviour {
 	public Texture rogueTextureLoader;
 	public GameObject splashPrefabLoader;
 	public GameObject shockFlashPrefabLoader;
-	
+	public GameObject holyExplosionPrefabLoader;
+	public Shader transparentVectorShaderLoader;
+	public Material brickMaterialLoader;
+	public GameObject halfBrickPrefabLoader;
+	public GameObject brickPrefabLoader;
 	
 	public static GameObject puckDustPrefab=null;
 	public static Texture brickCracked=null;
@@ -29,6 +33,11 @@ public class PrefabManager : MonoBehaviour {
 	public static Texture rogueTexture;
 	public static GameObject splashPrefab=null;
 	public static GameObject shockFlashPrefab=null;
+	public static GameObject holyExplosionPrefab=null;
+	public static Shader transparentVectorShader=null;
+	public static Material brickMaterial;
+	public static GameObject halfBrickPrefab=null;
+	public static GameObject brickPrefab=null;
 	
 	
 	
@@ -46,6 +55,11 @@ public class PrefabManager : MonoBehaviour {
 		rogueTexture=rogueTextureLoader;
 		splashPrefab=splashPrefabLoader;
 		shockFlashPrefab=shockFlashPrefabLoader;
+		holyExplosionPrefab=holyExplosionPrefabLoader;
+		transparentVectorShader=transparentVectorShaderLoader;
+		brickMaterial=brickMaterialLoader;
+		halfBrickPrefab=halfBrickPrefabLoader;
+		brickPrefab=brickPrefabLoader;
 	}		
 	
 	void Start () {

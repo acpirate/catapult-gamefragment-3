@@ -15,7 +15,7 @@ public class KingCode : MonoBehaviour {
 		//if (transform.position.y<-300) Destroy(gameObject);
 		
 		//if the king gets knocked off pedestal then its gameover
-		if (transform.position.y<20) MainGameCode.GameOver();
+		if (transform.position.y<10) MainGameCode.GameOver();
 		
 		if (stabilizeTimer>0) stabilizeTimer-=Time.deltaTime;
 		if (stabilizeTimer<0)  {

@@ -45,6 +45,9 @@ public class PuckCode : MonoBehaviour {
 	[HideInInspector]
 	public float wizardExplosionRadius=30;
 	
+	[HideInInspector]
+	public float priestExplosionRadius=300;
+	
 	// Use this for initialization
 	
 	void Start () {
@@ -87,10 +90,14 @@ public class PuckCode : MonoBehaviour {
 			puckMoving=false;
 			transform.rotation=Quaternion.Euler(0,0,0);
 			moveCamera.GetComponent<Camera>().enabled=false;
+			if (puckClass==PUCKCLASS.PRIEST) {
+				PriestExplosion();
+			}	
+			
 		}	
 		
-		if (Input.GetKey(KeyCode.LeftArrow)) direction=DIRECTION.LEFT;
-		if (Input.GetKey(KeyCode.RightArrow)) direction=DIRECTION.RIGHT;
+		if (Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.Q) || Input.GetKey(KeyCode.A)) direction=DIRECTION.LEFT;
+		if (Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.E) || Input.GetKey(KeyCode.D)) direction=DIRECTION.RIGHT;
 		
 		if (MainGameCode.gamestate==GAMESTATE.AIM && direction!=DIRECTION.NONE && MainGameCode.selectedPuck==gameObject) {
 			int rotationSwitch=1;
@@ -118,6 +125,14 @@ public class PuckCode : MonoBehaviour {
 		
 	}
 	
+	void PriestExplosion() {
+		Instantiate(PrefabManager.holyExplosionPrefab,transform.position,Quaternion.identity);	
+		Collider[] hitColliders = Physics.OverlapSphere(transform.position, priestExplosionRadius);
+		foreach (Collider hit in hitColliders) {
+			if (hit.gameObject.name=="Puck(Clone)") hit.gameObject.GetComponent<PuckCode>().currentCooldown*=.5f; 	
+		}	
+	}	
+	
 	public void DoCooldown() {
 		currentCooldown=maxCooldown;	
 	}	
@@ -137,15 +152,18 @@ public class PuckCode : MonoBehaviour {
 		switch (puckClass) {
 		case PUCKCLASS.PRIEST:
 			strength=2;
+			//rigidbody.mass=.5f;
 			transform.GetComponentInChildren<MeshRenderer>().material.SetTexture("_MainTex",PrefabManager.priestTexture);
 		break;
 		case PUCKCLASS.ROGUE:
 			strength=1;
+			//rigidbody.mass=.2f;
 			transform.GetComponentInChildren<MeshRenderer>().material.SetTexture("_MainTex",PrefabManager.rogueTexture);
 		break;
 		case PUCKCLASS.WIZARD:
 			transform.GetComponentInChildren<MeshRenderer>().material.SetTexture("_MainTex",PrefabManager.wizardTexture);
 			strength=0;
+			//rigidbody.mass=.1f;
 		break;
 		case PUCKCLASS.WARRIOR:
 			transform.GetComponentInChildren<MeshRenderer>().material.SetTexture("_MainTex",PrefabManager.warriorTexture);

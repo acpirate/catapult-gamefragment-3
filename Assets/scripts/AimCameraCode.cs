@@ -14,8 +14,8 @@ public class AimCameraCode : MonoBehaviour {
 	void Update () {
 		DIRECTION direction=DIRECTION.NONE;
 		
-		if (Input.GetKey(KeyCode.UpArrow)) direction=DIRECTION.UP;
-		if (Input.GetKey(KeyCode.DownArrow)) direction=DIRECTION.DOWN;
+		if (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W)) direction=DIRECTION.UP;
+		if (Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S)) direction=DIRECTION.DOWN;
 				
 		
 		if (MainGameCode.gamestate==GAMESTATE.AIM && direction!=DIRECTION.NONE) {
